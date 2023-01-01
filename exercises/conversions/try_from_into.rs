@@ -23,8 +23,6 @@ enum IntoColorError {
     IntConversion,
 }
 
-// I AM NOT DONE
-
 // Your task is to complete this implementation
 // and return an Ok result of inner type Color.
 // You need to create an implementation for a tuple of three integers,
@@ -34,10 +32,18 @@ enum IntoColorError {
 // but the slice implementation needs to check the slice length!
 // Also note that correct RGB color values must be integers in the 0..=255 range.
 
+macro_rules! report_conv_error {
+    () => {
+        return Err(IntoColorError::IntConversion)
+    };
+}
+
 // Tuple implementation
 impl TryFrom<(i16, i16, i16)> for Color {
     type Error = IntoColorError;
     fn try_from(tuple: (i16, i16, i16)) -> Result<Self, Self::Error> {
+        let conv = &[tuple.0, tuple.1, tuple.2][..];
+        return Color::try_from(conv);
     }
 }
 
@@ -45,6 +51,8 @@ impl TryFrom<(i16, i16, i16)> for Color {
 impl TryFrom<[i16; 3]> for Color {
     type Error = IntoColorError;
     fn try_from(arr: [i16; 3]) -> Result<Self, Self::Error> {
+        let conv = &arr[..];
+        return Color::try_from(conv);
     }
 }
 
@@ -52,6 +60,27 @@ impl TryFrom<[i16; 3]> for Color {
 impl TryFrom<&[i16]> for Color {
     type Error = IntoColorError;
     fn try_from(slice: &[i16]) -> Result<Self, Self::Error> {
+        if slice.len() != 3 {
+            return Err(IntoColorError::BadLen);
+        }
+
+        let mut converted_cols: Vec<u8> = Vec::new();
+
+        for c in slice {
+            let c = *c;
+            let convert_col = match c.try_into() {
+                Ok(val) => val,
+                Err(_) => report_conv_error!()
+            };
+
+            converted_cols.push(convert_col);
+        }
+
+        Ok(Color{
+            red: converted_cols[0],
+            green: converted_cols[1],
+            blue: converted_cols[2],
+        })
     }
 }
 
